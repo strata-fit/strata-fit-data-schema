@@ -22,7 +22,7 @@ openapi:
         **Ensure that the app runs locally, so that no data is shared!**
 
         Settings can be accessed via `/settings` request.
-    version: 0.0.9
+    version: 0.1.0
     settings_path: config/settings.yaml
     schema_path: config/schema.yaml
 
@@ -33,3 +33,12 @@ openapi:
 
 logging:
     level: INFO
+
+app:
+    data:
+        # number of rows to process at once to spare the memory
+        chunksize: 10
+        model_name: PatientData
+    errors:
+        # set number to limit the output stream of errors
+        max_to_collect: 1000

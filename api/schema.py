@@ -10,9 +10,6 @@ class ValidationDetail(BaseModel):
     error_type: str
     input_value: str
 
-class ValidationReport(BaseModel):
-    errors: Optional[list[ValidationDetail]] = None
-
 class PandasDelimeter(Enum):
     COMMA = ","
     SEMICOLON = ";"
