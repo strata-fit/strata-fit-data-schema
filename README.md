@@ -57,6 +57,23 @@ To use your own data validation schema:
     curl http://localhost:8000/schema
     ```
 
+#### Custom app settings
+
+All runtime parameters live in `config/settings.yaml`, so you don’t need to touch code to adjust:
+```yaml
+app:
+  data:
+    chunksize: 10          # number of rows to process per pandas chunk
+    model_name: PatientData
+  errors:
+    max_to_collect: 1000   # stop streaming after this many validation errors
+```
+- `app.data.chunksize` controls how many rows are read & validated at once (lower it to reduce memory use).
+- `app.data.model_name` chooses which Pydantic model from config/schema.yaml to use.
+- `app.errors.max_to_collect` caps the total number of error objects emitted to the client.
+
+Update these values, then restart your container (or local server) and the /validate endpoint will immediately pick up the new limits—no code changes or redeploy required.
+
 ### Development Mode
 For local development:
 
