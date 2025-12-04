@@ -1,23 +1,16 @@
-# Use an official Python runtime as a parent image
-FROM python:3.10-slim
-
-# Set the working directory to /app
+FROM harbor2.vantage6.ai/infrastructure/algorithm-base:4.13
+  
 WORKDIR /app
-
-# Copy only the requirements file to install dependencies first
-COPY requirements.txt .
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code to /app
+ARG PKG_NAME="strata_fit_v6_data_validator_py"
+  
 COPY . /app
+RUN pip install /app 
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir .
 
-# Define environment variable to store the mode in which the app runs
-ENV MODE=production
-
-# Run main.py from the api directory when the container launches using gunicorn as the WSGI server
-CMD ["gunicorn", "api.main:app", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8000"]
+# Dispatcher entrypoint
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+# no CMD – Vantage6 passes what it needs as env-vars; our entrypoint decides
