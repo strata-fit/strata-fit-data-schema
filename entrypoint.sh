@@ -11,7 +11,7 @@ case "$MODE" in
     exec strata-fit-validate "$@"
     ;;
   api)
-    exec uvicorn api.main:app --host "${HOST}" --port "${PORT}"
+    exec uvicorn strata_fit_v6_data_validator_py.main:app --host "${HOST}" --port "${PORT}"
     ;;
   algorithm|vantage6)
     exec python -c 'from vantage6.algorithm.tools.wrap import wrap_algorithm; wrap_algorithm()'

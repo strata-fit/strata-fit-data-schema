@@ -4,8 +4,8 @@ import sys
 
 import pandas as pd
 
-from api.logic import load_data_models_from_settings, validate_csv
-from api.schema import PandasDelimeter
+from strata_fit_v6_data_validator_py.logic import load_data_models_from_settings, validate_csv
+from strata_fit_v6_data_validator_py.schema import PandasDelimeter
 from config.config import settings
 
 

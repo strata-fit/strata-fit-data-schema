@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # Feel free to add more orgs or point to a different CSV for negative/positive
 # test-cases.  The key requirement is: db_type must be 'csv'.
 data_dir = Path(__file__).parent.parent / "data"
-dataset_ok   = {"database": data_dir / "example_digione_mbc_data_model_03.csv",
+dataset_ok   = {"database": data_dir / "correct.csv",
                 "db_type": "csv"}
 
 # one org → one list with that single dataset
@@ -39,7 +39,7 @@ org_ids = [0]
 client = MockAlgorithmClient(
     datasets=datasets_per_org,
     organization_ids=org_ids,
-    module="digione_v6_data_validator_py",  
+    module="strata_fit_v6_data_validator_py",
 )
 
 # --------------------------------------------------------------------------- #
@@ -59,6 +59,7 @@ task = client.task.create(
 # MockAlgorithmClient returns a *list* with one JSON string per organization.
 results_json_per_org = client.result.get(task["id"])
 result_dict = results_json_per_org
+print(result_dict)
 
 print("\nValidator result:")
 for k, v in result_dict.items():
