@@ -2,7 +2,9 @@ FROM harbor2.vantage6.ai/infrastructure/algorithm-base:4.13
   
 WORKDIR /app
 ARG PKG_NAME="strata_fit_v6_data_validator_py"
-  
+
+ENV PKG_NAME=${PKG_NAME}
+
 COPY . /app
 RUN pip install /app 
 
