@@ -3,7 +3,7 @@ requires = ["setuptools>=65", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "strata-fit-data-schema"
+name = "strata_fit_v6_data_validator_py"
 version = "0.1.0"
 description = "FastAPI service and CLI validator for the STRATA-FIT data schema, optionally runnable as a Vantage6 algorithm."
 readme = "README.md"
