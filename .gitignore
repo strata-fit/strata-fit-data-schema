@@ -1,6 +1,8 @@
 __pycache__/
 data/
 .DS_Store
+.venv/
+*.egg-info/
 
 # psi specific
 .psi-ignore

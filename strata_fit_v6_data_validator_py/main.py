@@ -12,13 +12,13 @@ import os
 import logging
 
 from config.config import settings
-from api.schema import  PandasDelimeter
-from api.logic import (
+from strata_fit_v6_data_validator_py.schema import PandasDelimeter
+from strata_fit_v6_data_validator_py.logic import (
     validate_csv,
     load_data_models_from_settings
 )
-from api.logs import setup_logging
-from api.utils import pretty_format_model
+from strata_fit_v6_data_validator_py.logs import setup_logging
+from strata_fit_v6_data_validator_py.utils import pretty_format_model
 
 # Setup the logging
 logger = logging.getLogger(__name__)

@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "strata_fit_v6_data_validator_py"
+version = "0.1.0"
+description = "FastAPI service and CLI validator for the STRATA-FIT data schema, optionally runnable as a Vantage6 algorithm."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Proprietary"}
+authors = [{name = "Strata-Fit Team"}]
+dependencies = [
+    "dynaconf>=3.2.5",
+    "fastapi>=0.111.0",
+    "gunicorn>=23.0.0",
+    "uvicorn>=0.30.4",
+    "pandas>=2.1.4",
+    "pydantic>=2.5.3",
+    "python-multipart>=0.0.9",
+    "vantage6-algorithm-tools>=4.13.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-mock>=3.10",
+]
+
+[project.scripts]
+strata-fit-validate = "scripts.validate:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["strata_fit_v6_data_validator_py*", "config*", "scripts*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+config = ["*.yaml"]

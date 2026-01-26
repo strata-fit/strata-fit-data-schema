@@ -1,104 +1,43 @@
-# STRATA-FIT Data Validation App
+# STRATA-FIT Data Validation
 
-## Project Description
-The STRATA-FIT Data Validation App is a FastAPI-based tool designed to validate CSV data files containing clinical information about patients with rheumatoid arthritis (RA). The validation is performed against a [customizable YAML schema](/config/schema.yaml), with support for pydantic constraints like `ge`, `le`, and [more](https://docs.pydantic.dev/latest/concepts/fields/#field-aliases:~:text=Alias%20concepts%20page.-,Numeric%20Constraints,Here%27s%20an%20example%3A,-from%20pydantic%20import), allowing users to enforce specific data quality and integrity rules.
+FastAPI service + CLI + Vantage6 algorithm to validate CSV files against the STRATA-FIT data schema (see `config/schema.yaml`). Configuration lives in `config/settings.yaml`/`config/schema.yaml`.
 
-The application supports file uploads through an API endpoint where users can submit their CSV files to be validated. Errors and discrepancies are reported back in a user-friendly format, making it easier for clinicians and researchers to identify and correct data issues.
+## Runtime modes (entrypoint)
+Set `RUN_MODE` in the container (or call the commands directly):
+- `RUN_MODE=api` — serve FastAPI: `uvicorn strata_fit_v6_data_validator_py.main:app --host 0.0.0.0 --port 8000`
+- `RUN_MODE=cli` — run the CLI validator: `strata-fit-validate --input <file.csv> [--output out.json] [--delimiter ,|;|\t|...]`
+- `RUN_MODE=algorithm` (default) — start the Vantage6 wrapper; exposes `validate_data` for federated runs. Errors returned to callers are coarse (counts only, no tracebacks).
 
-## Diagrams
-### Component Diagram
-![app](docs/app.png)
+Example docker run:
+```bash
+docker run --rm -p 8000:8000 \
+  -e RUN_MODE=api \
+  -v $(pwd)/config:/app/config \
+  ghcr.io/mdw-nl/strata-fit-data-val:latest
+```
 
-## Usage Instructions
+## Local development
+- Python `>=3.10,<3.13`.
+- Install in editable mode: `pip install -e .`
+- Run API: `RUN_MODE=api ./entrypoint.sh` or `uvicorn strata_fit_v6_data_validator_py.main:app --reload`
+- Run CLI: `strata-fit-validate --input data/correct.csv`
 
-[![Watch the usage guide video](docs/loom-video-thumbnail.png)](https://www.loom.com/share/df44944e2711460a921164e201261044)
-
-### Running the Application
-
-#### Dockerized Application
-
-Ensure you have a docker daemon installed. The easiest option is to download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/).
-
-To run the application in a Docker container with custom configurations (`config/`):
-
-1. **Pull the Docker Image**:
-   ```bash
-   docker pull ghcr.io/mdw-nl/strata-fit-data-val:latest
-   ```
-
-2. **Run the Docker Container**: 
-    
-    2.1. Using regular configuration:
-    ```bash
-    docker run --rm -p 8000:8000 ghcr.io/mdw-nl/strata-fit-data-val:latest
-    ```
-
-    2.2. Mount your custom configuration directory to the container:
-    ```bash
-    docker run --rm -p 8000:8000 -v $(pwd)/config:/app/config ghcr.io/mdw-nl/strata-fit-data-val:latest
-    ```
-    This command maps the local `config/` directory to `/app/config` within the container (with `-v $(pwd)/config:/app/config`), ensuring your custom settings are used.
-
-3. **Access the Application**: Visit http://localhost:8000/docs to interact with the API.
-
-#### Uploading Custom YAML Schema
-
-To use your own data validation schema:
-
-1. **Edit the `schema.yaml` File**: Modify the `config/schema.yaml` file with your custom data validation rules.
-
-2. **Mount the Configuration Directory**: Ensure your modified `config/` directory is correctly mounted when running the Docker container:
-    ```bash
-    docker run --rm -p 8000:8000 -v $(pwd)/config:/app/config ghcr.io/mdw-nl/strata-fit-data-val:latest
-    ```
-
-3. **Check Your Schema**: You can verify the current schema by accessing the `/schema` endpoint at http://localhost:8000/docs or with the following command:
-    ```bash
-    curl http://localhost:8000/schema
-    ```
-
-#### Custom app settings
-
-All runtime parameters live in `config/settings.yaml`, so you don’t need to touch code to adjust:
+## Configuration hints
+`config/settings.yaml` controls chunk size, model name, and error cap:
 ```yaml
 app:
   data:
-    chunksize: 10          # number of rows to process per pandas chunk
+    chunksize: 10
     model_name: PatientData
   errors:
-    max_to_collect: 1000   # stop streaming after this many validation errors
+    max_to_collect: 1000
 ```
-- `app.data.chunksize` controls how many rows are read & validated at once (lower it to reduce memory use).
-- `app.data.model_name` chooses which Pydantic model from config/schema.yaml to use.
-- `app.errors.max_to_collect` caps the total number of error objects emitted to the client.
+Update the YAML files, then restart the process; no code changes needed.
 
-Update these values, then restart your container (or local server) and the /validate endpoint will immediately pick up the new limits—no code changes or redeploy required.
+## API endpoints (when in `api` mode)
+- `/validate` — upload CSV for validation
+- `/settings` — current settings YAML
+- `/schema` — current schema YAML
 
-### Development Mode
-For local development:
-
-1. **Install Dependencies**: Ensure Python 3.10+ is installed, then install required dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-2. **Run the Application**: Start the FastAPI server with Uvicorn
-    ```bash
-    uvicorn api.main:app --reload
-    ```
-
-3. Interact with the API
-    Access the API through a [web browser](http://localhost:8000) or use tools like curl or Postman to upload CSV files for validation:
-
-    ```bash
-    curl -F 'file=@path_to_your_file.csv' http://localhost:8000/validate
-    ```
-
-### API Endpoints
-
-* `/validate`: Upload and validate your CSV file.
-* `/settings`: Access the current application settings.
-* `/schema`: Access the current data schema.
-
-## Additional Resources
-For more detailed development guidelines, please refer to the [DEV.md](DEV.md) file.
+## Diagrams
+![app](docs/app.png)
