@@ -59,7 +59,10 @@ def validate_csv(df: pd.DataFrame, model: BaseModel):
     return len(errors) > 0, errors
 
 def translate_errors(errors, row):
-    error_messages = settings.schema.error_messages
+    try:
+        error_messages = settings.schema.error_messages
+    except AttributeError:
+        error_messages = {}
     readable_errors = []
     for error in errors:
         field = error['loc'][0]
