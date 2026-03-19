@@ -42,6 +42,18 @@ Then validate a CSV with:
 datavalgen validate -m strata_fit_patient_data -d /path/to/data.csv
 ```
 
+For synthetic data generation, datavalgen uses `factories` (not `models`):
+```bash
+datavalgen generate --list
+datavalgen generate -f strata_fit_patient_data -n 10 --show-df
+```
+
+Round-trip `generate & validate` check:
+```bash
+datavalgen generate -f strata_fit_patient_data -n 30 -o /tmp/strata_generated.csv --force
+datavalgen validate -m strata_fit_patient_data -d /tmp/strata_generated.csv
+```
+
 ## Configuration hints
 `config/settings.yaml` controls chunk size, model name, and error cap:
 ```yaml

@@ -34,6 +34,10 @@ strata-fit-validate = "scripts.validate:main"
 strata_fit_patient_data = "strata_fit_v6_data_validator_py.datavalgen_plugin:PatientData"
 strata_fit_default = "strata_fit_v6_data_validator_py.datavalgen_plugin:DefaultModel"
 
+[project.entry-points."datavalgen.factories"]
+strata_fit_patient_data = "strata_fit_v6_data_validator_py.datavalgen_factories:PatientDataFactory"
+strata_fit_default = "strata_fit_v6_data_validator_py.datavalgen_factories:DefaultModelFactory"
+
 [tool.setuptools]
 include-package-data = true
 
