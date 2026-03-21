@@ -22,6 +22,38 @@ docker run --rm -p 8000:8000 \
 - Run API: `RUN_MODE=api ./entrypoint.sh` or `uvicorn strata_fit_v6_data_validator_py.main:app --reload`
 - Run CLI: `strata-fit-validate --input data/correct.csv`
 
+## Datavalgen plugin mode
+This package also exposes STRATA-FIT models as `datavalgen` plugins (similar to
+`datavalgen-model-beach`), without replacing the existing API/CLI/algorithm flow.
+
+After installing both packages in the same environment:
+```bash
+pip install -e .
+pip install datavalgen
+datavalgen validate --list
+```
+
+You should see:
+- `strata_fit_patient_data`
+- `strata_fit_default` (alias to `settings.app.data.model_name`)
+
+Then validate a CSV with:
+```bash
+datavalgen validate -m strata_fit_patient_data -d /path/to/data.csv
+```
+
+For synthetic data generation, datavalgen uses `factories` (not `models`):
+```bash
+datavalgen generate --list
+datavalgen generate -f strata_fit_patient_data -n 10 --show-df
+```
+
+Round-trip `generate & validate` check:
+```bash
+datavalgen generate -f strata_fit_patient_data -n 30 -o /tmp/strata_generated.csv --force
+datavalgen validate -m strata_fit_patient_data -d /tmp/strata_generated.csv
+```
+
 ## Configuration hints
 `config/settings.yaml` controls chunk size, model name, and error cap:
 ```yaml

@@ -1,9 +1,9 @@
 import logging
-import pandas as pd
-import numpy as np
 from datetime import date
-from pydantic import BaseModel, Field, create_model, ValidationError
 from typing import Optional # needed for Optional schema fields, DO NOT REMOVE
+
+import pandas as pd
+from pydantic import BaseModel, Field, ValidationError, create_model
 
 from .schema import ValidationDetail
 from config.config import settings
@@ -27,8 +27,10 @@ def load_data_models_from_settings():
                 constraints["min_length"] = field["min_length"]
             if "max_length" in field:
                 constraints["max_length"] = field["max_length"]
+            if "pattern" in field:
+                constraints["pattern"] = field["pattern"]
             if "regex" in field:
-                constraints["regex"] = field["regex"]
+                constraints["pattern"] = field["regex"]
 
             # Create a pydantic Field with constraints
             model_fields[field_name] = (field_type, Field(..., **constraints))
@@ -52,39 +54,37 @@ def validate_csv(df: pd.DataFrame, model: BaseModel):
     for index, row in df.iterrows():
         try:
             row_dict = row.where(pd.notnull(row), None).to_dict()
-            validated_data = model(**row_dict)
+            model(**row_dict)
         except ValidationError as e:
             translated_errors = translate_errors(e.errors(), index)
             errors.extend(translated_errors)
     return len(errors) > 0, errors
 
-def translate_errors(errors, row):
+def _lookup_error_message(field: str, error_type: str, fallback: str) -> str:
     try:
         error_messages = settings.schema.error_messages
     except AttributeError:
         error_messages = {}
+
+    for error_msg in error_messages.get(field, []):
+        if error_msg.get("type") == error_type:
+            return error_msg.get("message", fallback)
+    return fallback
+
+def translate_errors(errors, row):
     readable_errors = []
     for error in errors:
-        field = error['loc'][0]
-        error_type = error['type']
-        input_value = str(error.get('input', 'N/A'))  # Ensure value is a string for Pydantic compatibility
-
-        message = None
-        if field in error_messages:
-            for error_msg in error_messages[field]:
-                if error_msg['type'] == error_type:
-                    message = error_msg['message']
-                    break
-
-        if not message:
-            message = error['msg']
+        field = str(error["loc"][0])
+        error_type = error["type"]
+        input_value = str(error.get("input", "N/A"))  # Ensure value is a string for Pydantic compatibility
+        message = _lookup_error_message(field, error_type, error["msg"])
 
         validation_detail = ValidationDetail(
             row=row,
             field=field,
             message=message,
             error_type=error_type,
-            input_value=input_value
+            input_value=input_value,
         )
         readable_errors.append(validation_detail)
     return readable_errors

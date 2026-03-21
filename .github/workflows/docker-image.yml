@@ -16,28 +16,66 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: pip install dynaconf
-
-      - name: Get version from settings
+      - name: Get version from config/settings.yaml
         id: get_version
         run: |
-          echo "VERSION=$(python -c 'from config.config import settings; print(settings.openapi.version)')" >> $GITHUB_ENV
+          VERSION=$(python - <<'PY'
+          from pathlib import Path
+          import sys
+          
+          settings = Path("config/settings.yaml")
+          if not settings.exists():
+              print("config/settings.yaml not found", file=sys.stderr)
+              raise SystemExit(1)
+          
+          in_openapi = False
+          version = None
+          for line in settings.read_text(encoding="utf-8").splitlines():
+              stripped = line.strip()
+              if not stripped or stripped.startswith("#"):
+                  continue
+          
+              if not line.startswith((" ", "\t")):
+                  in_openapi = stripped.startswith("openapi:")
+                  continue
+          
+              if in_openapi and stripped.startswith("version:"):
+                  version = stripped.split(":", 1)[1].strip().strip("'\"")
+                  break
+          
+          if not version:
+              print("openapi.version not found in config/settings.yaml", file=sys.stderr)
+              raise SystemExit(1)
+          
+          print(version)
+          PY
+          )
+          echo "VERSION=${VERSION}" >> "$GITHUB_ENV"
 
       - name: Extract tag name
         id: tag_name
         run: |
           echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
 
+      - name: Validate release tag matches config/settings.yaml version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          EXPECTED_TAG="v${VERSION}"
+          if [ "${TAG_NAME}" != "${EXPECTED_TAG}" ]; then
+            echo "Tag ${TAG_NAME} does not match config/settings.yaml openapi.version ${VERSION}."
+            echo "Expected release tag: ${EXPECTED_TAG}"
+            exit 1
+          fi
+
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v1
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
