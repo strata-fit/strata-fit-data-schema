@@ -22,6 +22,7 @@ openapi:
         **Ensure that the app runs locally, so that no data is shared!**
 
         Settings can be accessed via `/settings` request.
+
     version: 0.1.2
     settings_path: config/settings.yaml
     schema_path: config/schema.yaml
