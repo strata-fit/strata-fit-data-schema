@@ -23,7 +23,7 @@ openapi:
 
         Settings can be accessed via `/settings` request.
 
-    version: 0.1.2
+    version: 0.1.3
     settings_path: config/settings.yaml
     schema_path: config/schema.yaml
 
