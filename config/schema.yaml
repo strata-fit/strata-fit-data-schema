@@ -123,7 +123,7 @@ schema:
       eq5d:
         type: "Optional[float]"
         example: 0.85
-        ge: 0
+        ge: -0.848
       HAQ:
         type: "Optional[float]"
         example: 1.25
@@ -256,7 +256,7 @@ schema:
         message: "Dose of concomitant GCs must be a number greater than or equal to 0, with one decimal point."
     eq5d:
       - type: value_error.number.not_ge
-        message: "EQ5D must be a number greater than or equal to 0."
+        message: "EQ5D must be a number greater than or equal to -0.848 in accordance with all participating countries for the EQ-5D-5L (Hungary)."
     HAQ:
       - type: value_error.number.not_ge
         message: "HAQ score must be between 0 and 3, using specific values: 0, 0.13, 0.25, 0.38, 0.5, 0.63, 0.75, 0.88, 1.0, 1.13, 1.25, 1.38, 1.5, 1.63, 1.75, 1.88, 2.0, 2.13, 2.25, 2.63, 2.75, 2.88, 3.0."
