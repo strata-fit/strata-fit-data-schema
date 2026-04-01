@@ -25,9 +25,15 @@ warnings.filterwarnings("ignore", category=UserWarning)
 # --------------------------------------------------------------------------- #
 # Feel free to add more orgs or point to a different CSV for negative/positive
 # test-cases.  The key requirement is: db_type must be 'csv'.
-data_dir = Path(__file__).parent.parent / "data"
-dataset_ok   = {"database": data_dir / "correct.csv",
-                "db_type": "csv"}
+data_dir = Path(__file__).parent / "data"
+fixture_path = data_dir / "correct.csv"
+if not fixture_path.exists():
+    raise FileNotFoundError(f"Missing test fixture CSV: {fixture_path}")
+
+dataset_ok = {
+    "database": fixture_path,
+    "db_type": "csv",
+}
 
 # one org → one list with that single dataset
 datasets_per_org = [[dataset_ok]]
