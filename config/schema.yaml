@@ -142,6 +142,26 @@ schema:
         type: "Optional[float]"
         example: 12.5
         ge: 0
+      csDMARD1_ATC:
+        type: "Optional[str]"
+        example: "L04AX03"
+        pattern: "^(?:A07EC01|L04AK01|L04AA13|L04AD01|L04AX01|L04AX03|P01BA02|P01BA01|L01AA01|L04AA06|M01CB01|M01CC01|M01CB03)?$"
+      csDMARD2_ATC:
+        type: "Optional[str]"
+        example: "A07EC01"
+        pattern: "^(?:A07EC01|L04AK01|L04AA13|L04AD01|L04AX01|L04AX03|P01BA02|P01BA01|L01AA01|L04AA06|M01CB01|M01CC01|M01CB03)?$"
+      csDMARD3_ATC:
+        type: "Optional[str]"
+        example: "P01BA02"
+        pattern: "^(?:A07EC01|L04AK01|L04AA13|L04AD01|L04AX01|L04AX03|P01BA02|P01BA01|L01AA01|L04AA06|M01CB01|M01CC01|M01CB03)?$"
+      bDMARD_ATC:
+        type: "Optional[str]"
+        example: "L04AB04"
+        pattern: "^(?:L01FA01|L01XC02|L04AA24|L04AB01|L04AB02|L04AB04|L04AB05|L04AB06|L04AC03|L04AA14|L04AC07|L04AC14)?$"
+      tsDMARD_ATC:
+        type: "Optional[str]"
+        example: "L04AF01"
+        pattern: "^(?:L04AF01|L04AA29|L04AF02|L04AA37|L04AF03|L04AA44|L04AF04|L04AA45)?$"
 
   error_messages:
     pat_ID:
@@ -262,3 +282,28 @@ schema:
         message: "HAQ score must be between 0 and 3, using specific values: 0, 0.13, 0.25, 0.38, 0.5, 0.63, 0.75, 0.88, 1.0, 1.13, 1.25, 1.38, 1.5, 1.63, 1.75, 1.88, 2.0, 2.13, 2.25, 2.63, 2.75, 2.88, 3.0."
       - type: value_error.number.not_le
         message: "HAQ score must be between 0 and 3, using specific values: 0, 0.13, 0.25, 0.38, 0.5, 0.63, 0.75, 0.88, 1.0, 1.13, 1.25, 1.38, 1.5, 1.63, 1.75, 1.88, 2.0, 2.13, 2.25, 2.63, 2.75, 2.88, 3.0."
+    csDMARD1_ATC:
+      - type: string_pattern_mismatch
+        message: "Current csDMARD1 ATC code must be a recognised csDMARD ATC code or blank."
+      - type: missing
+        message: "The csDMARD1_ATC column is missing from the dataset."
+    csDMARD2_ATC:
+      - type: string_pattern_mismatch
+        message: "Current csDMARD2 ATC code must be a recognised csDMARD ATC code or blank."
+      - type: missing
+        message: "The csDMARD2_ATC column is missing from the dataset."
+    csDMARD3_ATC:
+      - type: string_pattern_mismatch
+        message: "Current csDMARD3 ATC code must be a recognised csDMARD ATC code or blank."
+      - type: missing
+        message: "The csDMARD3_ATC column is missing from the dataset."
+    bDMARD_ATC:
+      - type: string_pattern_mismatch
+        message: "Current bDMARD ATC code must be a recognised bDMARD ATC code or blank."
+      - type: missing
+        message: "The bDMARD_ATC column is missing from the dataset."
+    tsDMARD_ATC:
+      - type: string_pattern_mismatch
+        message: "Current tsDMARD ATC code must be a recognised tsDMARD ATC code or blank."
+      - type: missing
+        message: "The tsDMARD_ATC column is missing from the dataset."
