@@ -1,0 +1,2 @@
+class RuntimeInputError(ValueError):
+    pass

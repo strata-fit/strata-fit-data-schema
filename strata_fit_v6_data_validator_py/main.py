@@ -1,128 +1,96 @@
-from functools import lru_cache
-from fastapi import (
-    FastAPI, Response, UploadFile,
-    File, HTTPException, Depends,
-)
-from fastapi.responses import StreamingResponse
-import pandas as pd
-import numpy as np
+from __future__ import annotations
+
 import io
 import json
-import os
 import logging
 
-from config.config import settings
-from strata_fit_v6_data_validator_py.schema import PandasDelimeter
-from strata_fit_v6_data_validator_py.logic import (
-    validate_csv,
-    load_data_models_from_settings
-)
-from strata_fit_v6_data_validator_py.logs import setup_logging
-from strata_fit_v6_data_validator_py.utils import pretty_format_model
+import pandas as pd
+from fastapi import File, HTTPException, UploadFile
+from fastapi import FastAPI, Response
+from fastapi.responses import StreamingResponse
 
-# Setup the logging
+from .logic import get_model, iter_csv_errors, load_data_models_from_settings
+from .logs import setup_logging
+from .schema import PandasDelimeter
+from .settings import resolve_config_file, settings
+
 logger = logging.getLogger(__name__)
 setup_logging(level=settings.logging.level)
 
-# Initialize the Validator App
 app = FastAPI(
     title=settings.openapi.title,
     description=settings.openapi.description,
     version=settings.openapi.version,
-    contact=settings.openapi.contact
+    contact=settings.openapi.contact,
 )
+
+
+def _yaml_response(path_value: str, missing_message: str) -> Response:
+    path = resolve_config_file(path_value)
+    if path.is_file():
+        logger.info("Config file retrieved: %s", path)
+        return Response(content=path.read_text(encoding="utf-8"), media_type="application/x-yaml")
+    logger.warning("Config file not found at: %s", path)
+    return Response(content=missing_message, status_code=404)
+
 
 @app.get("/settings", tags=["Settings"])
 def get_settings():
-    settings_file_path = settings.openapi.settings_path
-    if os.path.exists(settings_file_path):
-        logger.info(f"Settings file retrieved: {settings_file_path}")
-        with open(settings_file_path, 'r') as settings_file:
-            return Response(content=settings_file.read(), media_type="application/x-yaml")
-    else:
-        logger.warning(f"Settings file not found at: {settings_file_path}")
-        return Response(content="Settings file not found.", status_code=404)
-    
+    return _yaml_response(settings.openapi.settings_path, "Settings file not found.")
+
+
 @app.get("/schema", tags=["Settings"])
 def get_schema():
-    schema_file_path = settings.openapi.schema_path
-    if os.path.exists(schema_file_path):
-        logger.info(f"Schema file retrieved: {schema_file_path}")
-        with open(schema_file_path, 'r') as schema_file:
-            return Response(content=schema_file.read(), media_type="application/x-yaml")
-    else:
-        logger.warning(f"Schema file not found at: {schema_file_path}")
-        return Response(content="Data Schema file not found.", status_code=404)
+    return _yaml_response(settings.openapi.schema_path, "Data Schema file not found.")
 
-@lru_cache
-def get_models():
-    models = load_data_models_from_settings()
-    pretty_models = "\n".join(
-        pretty_format_model(model_name, model) for model_name, model in models.items()
-    )
-    logger.info(f"Data models loaded:{pretty_models}")
-    return models
 
 @app.post("/validate", tags=["Validation"])
 async def validate(
     file: UploadFile = File(...),
     delimeter: PandasDelimeter = PandasDelimeter.COMMA,
-    models: dict = Depends(get_models),
 ):
-    # 1) Basic file checks
-    if not file.filename.lower().endswith(".csv"):
-        logger.error(f"Rejected non-CSV upload: {file.filename}")
+    filename = file.filename or ""
+    if not filename.lower().endswith(".csv"):
+        logger.error("Rejected non-CSV upload: %s", filename)
         raise HTTPException(status_code=400, detail="Please upload a CSV file.")
-    # 2) Read bytes & decode
     try:
         raw = await file.read()
         text = raw.decode("utf-8")
-    except UnicodeDecodeError as e:
+    except UnicodeDecodeError as exc:
         logger.exception("CSV decoding failed")
-        raise HTTPException(status_code=400, detail=f"File must be UTF-8 encoded: {e}")
+        raise HTTPException(status_code=400, detail=f"File must be UTF-8 encoded: {exc}") from exc
 
-    # 3) Quick header‑only parse to catch delimiters / malformed CSV
     try:
         pd.read_csv(io.StringIO(text), delimiter=delimeter.value, nrows=0)
-    except Exception as e:
+    except Exception as exc:
         logger.exception("CSV header parse failed")
-        raise HTTPException(status_code=400, detail=f"CSV parse error: {e}")
+        raise HTTPException(status_code=400, detail=f"CSV parse error: {exc}") from exc
 
-    model = models[settings.app.data.model_name]
+    model = get_model()
+    load_data_models_from_settings()
+    logger.info("Data models loaded: %s", ", ".join(load_data_models_from_settings()))
     chunksize = settings.app.data.chunksize
-    max_errors_to_report = (
-        settings.app.errors.max_to_collect
-        if settings.app.errors.max_to_collect
-        else np.inf
-    )
+    max_errors_to_report = settings.app.errors.max_to_collect or None
 
     def stream_array():
-        yield "["  
+        yield "["
         first = True
-        buf = io.StringIO(text)
-        error_count = 0
         try:
-            for chunk in pd.read_csv(
-                buf,
+            for detail in iter_csv_errors(
+                io.StringIO(text),
+                model=model,
                 delimiter=delimeter.value,
-                chunksize=chunksize
+                chunksize=chunksize,
+                max_errors=max_errors_to_report,
             ):
-                _, errs = validate_csv(chunk, model)
-                for e in errs:
-                    if error_count >= max_errors_to_report:
-                        break
-                    if not first:
-                        yield ","
-                    yield e.json()
-                    first = False
-                    error_count += 1
-                if error_count >= max_errors_to_report:
-                    break
-        except Exception as e:
-            # If something goes wrong mid‑stream, emit a terminal error object
+                if not first:
+                    yield ","
+                yield detail.model_dump_json()
+                first = False
+        except Exception as exc:
             err_obj = {
                 "error": "Validation stream failed",
-                "detail": str(e)
+                "detail": str(exc),
             }
             if not first:
                 yield ","
@@ -130,7 +98,4 @@ async def validate(
         finally:
             yield "]"
 
-    return StreamingResponse(
-        stream_array(),
-        media_type="application/json"
-    )
+    return StreamingResponse(stream_array(), media_type="application/json")

@@ -1,0 +1,2 @@
+pat_ID,Visit_months_from_diagnosis,Age_diagnosis,Sex,RF_positivity,anti_CCP,DAS28,Pat_global,Pain,Ph_global,CRP,ESR,SJC28,TJC28,csDMARD1,csDMARD2,csDMARD3,conc_MTX_dose,N_prev_csDMARD,bDMARD,N_prev_bDMARD,tsDMARD,N_prev_tsDMARD,GC,GC_type,GC_dose,eq5d,HAQ,Year_diagnosis,month_diagnosis,Symptom_duration
+bad-id,12,17,1,1,0,2.5,60,55,50,1.2,20,4,6,1,,,15.0,2,,0,,0,1,2,5.0,0.8,1.2,2015,6,12.5
